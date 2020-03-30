@@ -1,0 +1,160 @@
+---
+title: 'Machine Learning Course Project - Prediction Assignment'
+author: "J-Besna"
+date: "March 29, 2020"
+output: html_document
+---
+
+Part 1: Data Overview
+
+To run this analysis, download the csv files in this repository. Set your working directory to the folder with the csv file and you will be able to run this analysis.The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+
+The data consists of accelerometer data worn on the belt, arm, forearm, and dumbell of 6 participants. The participants were asked to perform barbell lifts correctly and incorrectly in five different ways. This analysis predicts the how the exercise performed (the "classe" field) based on independent variables. In the "classe" field, A represents an exercise performed correctly while B-E each represent a specific incorrect performance of the exercise.
+
+Part 2: Data Import and Initial Data Cleaning
+
+Taking a quick overview of the data using str() function, we can see there are 160 variables over 19,622 observations. We will need to remove as many insignicant variables as possible to be able to run some classification algorithms. Immediately we can remove the following columns that add no modeling value: X, user_name, kurtosis_yaw_belt, skewness_yaw_belt and all the timestamp columns.
+
+```{r, echo=FALSE, results='hide', message=FALSE}
+# load packages to fit data
+library(caret); library(kernlab); library("e1071"); library(randomForest)
+library(dplyr); library(rpart.plot); library(rpart); library(rattle)
+library(scales)
+```
+
+```{r, echo=FALSE, results='hide'}
+# import training data, note that strings as factors is set to false to 
+# make modeling algorithms function correctly
+set.seed(32343)
+dat.train <- read.csv("pml-training.csv",TRUE,sep=",", stringsAsFactors = FALSE)
+# import test data
+dat.test <- read.csv("pml-testing.csv",TRUE,sep=",", stringsAsFactors = FALSE)
+#na.strings="na")
+
+# load packages to fit data
+library(caret); library(kernlab); library("e1071"); library(randomForest)
+library(dplyr); library(rpart.plot); library(rpart); library(rattle)
+library(scales)
+set.seed(32343)
+
+# evaluate the data
+str(dat.train)
+# we can eliminate the X, user_name, kurtosis_yaw_belt, skewness_yaw_belt
+# and all the timestamp columns because these add no value
+drop_cols <- c('X','user_name','kurtosis_yaw_belt','skewness_yaw_belt','raw_timestamp_part_1','raw_timestamp_part_2','cvtd_timestamp')
+dat.train <- dat.train[ , !(names(dat.train) %in% drop_cols)]
+```
+
+Part 3: Eliminating Unncessary Variables
+
+We still have 153 columns with over 19,000 observations, which is too many to run ML algorithms. To run the model we will check the column contents to see if any can be removed using the summary() function, which reveals that many columns contain nearly all NA values. These can all be eliminated. Additionally, we check to see which variables have high correlation and eliminate these variables as well since they will not add modeling value.
+
+```{r, echo=TRUE, results='hide'}
+        # run a summary to get a feel for the distribution of values             within the variables
+        summary(dat.train)
+        # we see a good number of columns that have 19,216 NA values,            adding little value and they can be eliminated. we'll use 95% NA         rate to remove the columns
+        drop_cols <- which(colSums(dat.train=="" | is.na(dat.train))>0.95*dim(dat.train)[1]) 
+        str(drop_cols)
+        # we end up deleting 31 columns
+        dat.train <- dat.train[ ,-drop_cols]
+        # this leaves 122 columns
+        ncol(dat.train)
+        # next we eliminate redunant variables by checking for variables
+        # that are correlated with one another by at least 75% (source: https://machinelearningmastery.com/feature-selection-with-the-caret-r-package/)
+        # get numeric columns
+        dat.train.nums <- select_if(dat.train,is.numeric)
+        # calculate correlation matrix
+        correlationMatrix <- cor(dat.train.nums)
+        # summarize the correlation matrix
+        print(correlationMatrix)
+        # find attributes that are highly corrected (ideally >0.75)
+        highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.75)
+        # remove highly correlated variables
+        dat.train <- dat.train[,-highlyCorrelated]
+        nrow(dat.train)
+```
+
+Part 4: Partition the data into training data and testing data using a 50/50 split. While a 70/30 split is more common, we will use 50/50 to conserve runtime and accomodate local processing limitations. We then verify that the distribution of classe dependent variable is similar across the training and testing data.
+
+```{r, echo=TRUE}
+        # partition data into train/test. Normally would use 70/30 split,         but going with 50/50 to save on processing
+        inTrain <- createDataPartition(y=dat.train$classe,
+                                       p=0.5, list=FALSE)
+        training <- dat.train[inTrain,]
+        testing <- dat.train[-inTrain,]
+        # next we to verify that the distribution of the classe variable         is similar in training and testing data
+        table(training$classe)
+        table(testing$classe)
+```
+
+Part 5: Run a decision tree model.
+
+```{r, echo=TRUE}
+        # decision tree example
+        mod_rpart <- train(classe ~ .,method="rpart",data=training)
+        print(mod_rpart$finalModel)
+        
+        fancyRpartPlot(mod_rpart$finalModel)
+        
+        # Predict and create confusion matrix
+        pred_cm <- predict(mod_rpart,newdata=testing)
+        cm_rpart <- confusionMatrix(as.factor(testing$classe),pred_cm)
+        cm_rpart
+        rpart_accuracy <- cm_rpart$overall['Accuracy']
+```
+
+Part 6: Run a random forest model.
+
+```{r, echo=TRUE}
+      # Try random forest
+        fitControl <- trainControl(method='cv', number = 3)
+        mod_rf <- train(classe~., data=training, method="rf", trControl=fitControl, verbose=FALSE)
+        # Plot
+        plot(mod_rf,main="RF Model Accuracy by number of predictors")
+        
+        # Testing the model
+        pred_rf <- predict(mod_rf,newdata=testing)
+        cm_rf <- confusionMatrix(as.factor(testing$classe),pred_rf)
+        rf_accuracy <- cm_rf$overall['Accuracy']
+        # Display confusion matrix and model accuracy
+        cm_rf
+```
+
+Part 7: Run a general boosting model (GBM).
+
+```{r, echo=TRUE}
+        # try general boosting model
+        mod_gbm <- train(classe~., data=training, method="gbm", trControl=fitControl, verbose=FALSE)
+        #  Plot 
+        plot(mod_gbm)
+        
+        # Testing the model
+        pred_gbm <- predict(mod_gbm,newdata=testing)
+        cm_gbm <- confusionMatrix(as.factor(testing$classe),pred_gbm)
+        
+        # Display confusion matrix and model accuracy
+        cm_gbm
+        gbm_accuracy <- cm_gbm$overall['Accuracy']
+```
+
+Part 8: Compare the model accuracy across the 3 models (decision tree, random forest, general boosting)
+
+```{r, echo=TRUE}
+        # Graph acccuracy of models to see which is more accurate
+        models <- c('Decision Tree','Random Forest','General Boosting')
+        accuracy <- c(rpart_accuracy,rf_accuracy,gbm_accuracy)
+        graph.data <- data.frame(models,accuracy)
+        p<-ggplot(data=graph.data, aes(x=models, y=accuracy)) +
+                geom_bar(stat="identity", fill="steelblue")+
+                geom_text(aes(label=percent(accuracy)), vjust=-0.3, size=3)+ scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
+                theme_minimal()
+        p
+```
+
+We see that the Random Forest model has highest accuracy. We then predict the test set of 20 observations using the Random Forest model to get the following predicted results:
+
+```{r, echo=TRUE}
+        test_final <- predict(mod_rf,newdata=dat.test)
+        test_final
+```
+
