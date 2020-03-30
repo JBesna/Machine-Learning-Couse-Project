@@ -91,7 +91,7 @@ Part 4: Partition the data into training data and testing data using a 50/50 spl
 
 Part 5: Run a decision tree model.
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, dpi=36, out.width="600px", out.height="600px"}
         # decision tree example
         mod_rpart <- train(classe ~ .,method="rpart",data=training)
         print(mod_rpart$finalModel)
@@ -107,12 +107,12 @@ Part 5: Run a decision tree model.
 
 Part 6: Run a random forest model.
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, dpi=36, out.width="600px", out.height="600px"}
       # Try random forest
         fitControl <- trainControl(method='cv', number = 3)
         mod_rf <- train(classe~., data=training, method="rf", trControl=fitControl, verbose=FALSE)
         # Plot
-        # Plot(mod_rf,main="RF Model Accuracy by number of predictors")
+        plot(mod_rf,main="RF Model Accuracy by number of predictors")
         
         # Testing the model
         pred_rf <- predict(mod_rf,newdata=testing)
@@ -124,7 +124,7 @@ Part 6: Run a random forest model.
 
 Part 7: Run a gradient boosting model (GBM).
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, dpi=36, out.width="600px", out.height="600px"}
         # try gradient boosting model
         mod_gbm <- train(classe~., data=training, method="gbm", trControl=fitControl, verbose=FALSE)
         #  Plot 
