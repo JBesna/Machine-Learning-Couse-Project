@@ -5,11 +5,13 @@ date: "March 29, 2020"
 output: html_document
 ---
 
-Part 1: Data Overview
+Part 1: Project Overview
 
 To run this analysis, download the csv files in this repository. Set your working directory to the folder with the csv file and you will be able to run this analysis.The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
 
-The data consists of accelerometer data worn on the belt, arm, forearm, and dumbell of 6 participants. The participants were asked to perform barbell lifts correctly and incorrectly in five different ways. This analysis predicts the how the exercise performed (the "classe" field) based on independent variables. In the "classe" field, A represents an exercise performed correctly while B-E each represent a specific incorrect performance of the exercise.
+The data consists of accelerometer data worn on the belt, arm, forearm, and dumbell of 6 participants. The participants were asked to perform barbell lifts correctly and incorrectly in five different ways. This analysis predicts the how the exercise performed (the "classe" field) based on independent variables. In the "classe" field, A represents an exercise performed correctly while B-E each represent a specific incorrect performance of the exercise. 
+
+The objective is to evaluate several machine learning models using the training data and use the best model to predict values for the 20 observations in the testing data. This exercise will evaluate 3 types of machine learning models: Decision Tree, Random Forest, and Gradient Boosting.
 
 Part 2: Data Import and Initial Data Cleaning
 
@@ -110,7 +112,7 @@ Part 6: Run a random forest model.
         fitControl <- trainControl(method='cv', number = 3)
         mod_rf <- train(classe~., data=training, method="rf", trControl=fitControl, verbose=FALSE)
         # Plot
-        plot(mod_rf,main="RF Model Accuracy by number of predictors")
+        # Plot(mod_rf,main="RF Model Accuracy by number of predictors")
         
         # Testing the model
         pred_rf <- predict(mod_rf,newdata=testing)
@@ -120,10 +122,10 @@ Part 6: Run a random forest model.
         cm_rf
 ```
 
-Part 7: Run a general boosting model (GBM).
+Part 7: Run a gradient boosting model (GBM).
 
 ```{r, echo=TRUE}
-        # try general boosting model
+        # try gradient boosting model
         mod_gbm <- train(classe~., data=training, method="gbm", trControl=fitControl, verbose=FALSE)
         #  Plot 
         plot(mod_gbm)
@@ -137,11 +139,11 @@ Part 7: Run a general boosting model (GBM).
         gbm_accuracy <- cm_gbm$overall['Accuracy']
 ```
 
-Part 8: Compare the model accuracy across the 3 models (decision tree, random forest, general boosting)
+Part 8: Compare the model accuracy across the 3 models (decision tree, random forest, gradient boosting)
 
 ```{r, echo=TRUE}
         # Graph acccuracy of models to see which is more accurate
-        models <- c('Decision Tree','Random Forest','General Boosting')
+        models <- c('Decision Tree','Random Forest','Gradient Boosting')
         accuracy <- c(rpart_accuracy,rf_accuracy,gbm_accuracy)
         graph.data <- data.frame(models,accuracy)
         p<-ggplot(data=graph.data, aes(x=models, y=accuracy)) +
@@ -151,7 +153,7 @@ Part 8: Compare the model accuracy across the 3 models (decision tree, random fo
         p
 ```
 
-We see that the Random Forest model has highest accuracy. We then predict the test set of 20 observations using the Random Forest model to get the following predicted results:
+We see that the Random Forest model has the highest accuracy. We then predict the test set of 20 observations using the Random Forest model to get the following predicted results:
 
 ```{r, echo=TRUE}
         test_final <- predict(mod_rf,newdata=dat.test)
