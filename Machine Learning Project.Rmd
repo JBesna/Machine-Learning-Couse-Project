@@ -1,8 +1,10 @@
 ---
-title: 'Machine Learning Course Project - Prediction Assignment'
+title: "Machine Learning Course Project - Prediction Assignment"
 author: "J-Besna"
 date: "March 29, 2020"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 Part 1: Project Overview
@@ -91,7 +93,7 @@ Part 4: Partition the data into training data and testing data using a 50/50 spl
 
 Part 5: Run a decision tree model.
 
-```{r, echo=TRUE, dpi=36, out.width="600px", out.height="600px"}
+```{r, echo=TRUE, dpi=36, out.width="300px", out.height="300px"}
         # decision tree example
         mod_rpart <- train(classe ~ .,method="rpart",data=training)
         print(mod_rpart$finalModel)
@@ -107,7 +109,7 @@ Part 5: Run a decision tree model.
 
 Part 6: Run a random forest model.
 
-```{r, echo=TRUE, dpi=36, out.width="600px", out.height="600px"}
+```{r, echo=TRUE, dpi=36, out.width="300px", out.height="300px"}
       # Try random forest
         fitControl <- trainControl(method='cv', number = 3)
         mod_rf <- train(classe~., data=training, method="rf", trControl=fitControl, verbose=FALSE)
@@ -124,7 +126,7 @@ Part 6: Run a random forest model.
 
 Part 7: Run a gradient boosting model (GBM).
 
-```{r, echo=TRUE, dpi=36, out.width="600px", out.height="600px"}
+```{r, echo=TRUE, dpi=36, out.width="300px", out.height="300px"}
         # try gradient boosting model
         mod_gbm <- train(classe~., data=training, method="gbm", trControl=fitControl, verbose=FALSE)
         #  Plot 
