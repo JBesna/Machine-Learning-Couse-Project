@@ -3,8 +3,8 @@ title: "Machine Learning Course Project - Prediction Assignment"
 author: "J-Besna"
 date: "March 29, 2020"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 Part 1: Project Overview
@@ -81,7 +81,7 @@ We still have 153 columns with over 19,000 observations, which is too many to ru
 Part 4: Partition the data into training data and testing data using a 50/50 split. While a 70/30 split is more common, we will use 50/50 to conserve runtime and accomodate local processing limitations. We then verify that the distribution of classe dependent variable is similar across the training and testing data.
 
 ```{r, echo=TRUE}
-        # partition data into train/test. Normally would use 70/30 split,         but going with 50/50 to save on processing
+        # partition data into train/test. Normally would use 70/30 split but going with 50/50 to save on processing
         inTrain <- createDataPartition(y=dat.train$classe,
                                        p=0.5, list=FALSE)
         training <- dat.train[inTrain,]
